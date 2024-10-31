@@ -1,0 +1,12 @@
+server:
+  port: 9999
+spring:
+  application:
+    name: QNY-start
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 60.204.171.32:8848
+      config:
+        server-addr: 60.204.171.32:8848
+        file-extension: yml
