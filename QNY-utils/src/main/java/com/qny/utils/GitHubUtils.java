@@ -198,18 +198,25 @@ public class GitHubUtils {
             List<User> following = followingFuture.get();
 
             Map<String, Integer> locationCount = new HashMap<>();
-            for (User user : followers) {
-                executor.submit((Callable<Void>) () -> {
-                    processUser(user, locationCount, FOLLOWERS_W);
-                    return null;
-                });
+
+            if (followers != null) {
+                for (User user : followers) {
+                    executor.submit((Callable<Void>) () -> {
+                        processUser(user, locationCount, FOLLOWERS_W);
+                        return null;
+                    });
+                }
+
             }
-            for (User user : following) {
-                executor.submit((Callable<Void>) () -> {
-                    // 关注的人比粉丝更重要，所以权重更高
-                    processUser(user, locationCount, FOLLOWING_W);
-                    return null;
-                });
+
+            if (following != null) {
+                for (User user : following) {
+                    executor.submit((Callable<Void>) () -> {
+                        // 关注的人比粉丝更重要，所以权重更高
+                        processUser(user, locationCount, FOLLOWING_W);
+                        return null;
+                    });
+                }
             }
 
             executor.shutdown();
@@ -435,7 +442,7 @@ public class GitHubUtils {
         // 获得该用户的全部仓库
         List<Repos> repos = getRepo(userName);
 
-        if (repos.isEmpty()) return null;
+        if (repos == null) return null;
 
         // 取出start值最高的五个项目
         List<Repos> collect = repos.stream().sorted(Comparator.comparingInt(Repos::getStargazers_count).reversed())
@@ -525,11 +532,11 @@ public class GitHubUtils {
         }
     }
 
-//    public static void main(String[] args) {
-//        GitHubUtils gitHubUtils = new GitHubUtils();
+    public static void main(String[] args) {
+        GitHubUtils gitHubUtils = new GitHubUtils();
 
-//        String locationCount = gitHubUtils.getUserLocations("ruanyl");
-//        System.out.println(locationCount);
+        String locationCount = gitHubUtils.getUserLocations("ruanyl");
+        System.out.println(locationCount);
 
 //        gitHubUtils.getUser(200);
 //        System.out.println(gitHubUtils.getScore("tpope"));
@@ -575,5 +582,5 @@ public class GitHubUtils {
 
 //        getKimiEvaluate("tpope");
 //
-//    }
+    }
 }

@@ -113,9 +113,13 @@ public class DataServiceImpl implements DataService {
 
                         // 计算某用户的领域
                         Map<String, Integer> frequencyMap = new HashMap<>();
-                        for (Repos repos : GitHubUtils.getRepo(user.getLogin())) {
-                            for (String topic : repos.getTopics()) {
-                                frequencyMap.put(topic, frequencyMap.getOrDefault(topic, 0) + 1);
+                        List<Repos> repo = GitHubUtils.getRepo(user.getLogin());
+
+                        if (repo != null) {
+                            for (Repos repos : repo) {
+                                for (String topic : repos.getTopics()) {
+                                    frequencyMap.put(topic, frequencyMap.getOrDefault(topic, 0) + 1);
+                                }
                             }
                         }
 
