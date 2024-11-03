@@ -30,9 +30,9 @@ public class GitHubUtils {
     // following的权重
     private static int FOLLOWING_W = 5;
     // followers的权重
-    private static int FOLLOWERS_W = 1;
+    private static int FOLLOWERS_W = 2;
     // 访问github，加速token
-    private static String AUTH_GITHUB = "token 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";
+    private static String AUTH_GITHUB = "token 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";
     // kimi的token 需要自行获取
     private static String AUTH_KIMI = "sk-plfiZ3SNfypZuLsLMux8xTj81qcZKXj3AIaGKSETLDe7XjqK";
     // kimi接口地址
@@ -167,18 +167,18 @@ public class GitHubUtils {
 
                 for (int i = 0; i < locations.length; i ++) {
                     // 计算地区出现次数*权重，越在后面越重要
-                    locationCount.put(locations[i].trim(), locationCount.getOrDefault(locations[i].trim(), 0) + w * (i + 1));
+                    locationCount.put(locations[i].trim(), locationCount.getOrDefault(locations[i].trim(), 0) + w);
                 }
             }
             else {
                 String key = location.trim();
-                locationCount.put(key, locationCount.getOrDefault(key, 0) + w * 2);
+                locationCount.put(key, locationCount.getOrDefault(key, 0) + w);
             }
         }
     }
 
     /**
-     * 给名字，返回最有可能的国家
+     * 给名字，返回最有可能的国家（轮询用户社交关系，未采用）
      * @param userName
      * @return
      */
@@ -276,6 +276,119 @@ public class GitHubUtils {
     }
 
     /**
+     * 通过用户的工作时间（从中得到时区），以及用户的社交关系，利用类chatGPT软件推理
+     * @param userName
+     * @return
+     */
+    public static String getUserLocations1(String userName) {
+        String httpsUrlFollowers = "https://api.github.com/users/" + userName + "/followers";
+        String httpsUrlFollowing = "https://api.github.com/users/" + userName + "/following";
+        ExecutorService executor = Executors.newFixedThreadPool(THREAD_NUM);
+        // 线程池，个数可选
+        Callable<List<User>> followersTask = () -> JSON.parseArray(request(httpsUrlFollowers), User.class);
+        Callable<List<User>> followingTask = () -> JSON.parseArray(request(httpsUrlFollowing), User.class);
+
+        try {
+            Future<List<User>> followersFuture = executor.submit(followersTask);
+            Future<List<User>> followingFuture = executor.submit(followingTask);
+
+            List<User> followers = followersFuture.get();
+            List<User> following = followingFuture.get();
+
+            Map<String, Integer> locationCount1 = new HashMap<>();
+            Map<String, Integer> locationCount2 = new HashMap<>();
+
+            if (followers != null) {
+                for (User user : followers) {
+                    executor.submit((Callable<Void>) () -> {
+                        processUser(user, locationCount1, 1);
+                        return null;
+                    });
+                }
+
+            }
+
+            if (following != null) {
+                for (User user : following) {
+                    executor.submit((Callable<Void>) () -> {
+                        processUser(user, locationCount2, 1);
+                        return null;
+                    });
+                }
+            }
+
+            executor.shutdown();
+            if (!executor.awaitTermination(300, TimeUnit.SECONDS)) {
+                executor.shutdownNow();
+            }
+
+            String json = "https://api.github.com/users/" + userName + "/events";
+            String request = request(json);
+
+            List<Events> events = JSON.parseArray(request, Events.class);
+
+            List<String> dateList = new ArrayList<>();
+            if (events != null) {
+                for (Events event : events) {
+                    String createdAt = event.getCreatedAt();
+                    String updatedAt = event.getUpdatedAt();
+                    if (StringUtils.isNotBlank(createdAt)) dateList.add(createdAt);
+                    if (StringUtils.isNotBlank(updatedAt)) dateList.add(updatedAt);
+                }
+            }
+
+            // 置信度太低
+            if (locationCount1.size() < 5 && locationCount2.size() < 5) return "N/A";
+
+            KimiDto kimiDto = new KimiDto();
+            kimiDto.setModel("moonshot-v1-32k");
+
+            List<KimiMessage> list = new ArrayList<>();
+
+            // 构建问题
+            KimiMessage kimiMessage1 = new KimiMessage();
+            kimiMessage1.setRole("user");
+            kimiMessage1.setContent("用户的工作时间记录：" + dateList);
+            list.add(kimiMessage1);
+
+            KimiMessage kimiMessage2 = new KimiMessage();
+            kimiMessage2.setRole("user");
+            kimiMessage2.setContent("用户关注的人的居住地数量" + locationCount1);
+            list.add(kimiMessage2);
+
+            KimiMessage kimiMessage3 = new KimiMessage();
+            kimiMessage3.setRole("user");
+            kimiMessage3.setContent("用户粉丝的居住地数量" + locationCount2);
+            list.add(kimiMessage3);
+
+            KimiMessage kimiMessage4 = new KimiMessage();
+            kimiMessage4.setRole("user");
+            kimiMessage4.setContent("请根据用户的工作时间（从中获得时区），以及根据用户的社交关系推断该github用户最有可能的国籍，只需要显示推断理由和结果，若置信度过低则返回N/A");
+            list.add(kimiMessage4);
+
+            kimiDto.setMessages(list);
+
+            // 询问类chatgpt应用 该用户属于哪个国家
+            String s = request_kimi(JSON.toJSONString(kimiDto));
+
+            String mostFrequentLocation = "";
+
+            ChatCompletionResponse chatCompletionResponse = JSON.parseObject(s, ChatCompletionResponse.class);
+
+            if (chatCompletionResponse == null) return "N/A";
+
+            for (ChatCompletionResponse.Choice choice : chatCompletionResponse.getChoices()) {
+                mostFrequentLocation = choice.getMessage().getContent();
+            }
+
+            return mostFrequentLocation;
+        } catch (Exception e) {
+            e.printStackTrace(); // 更详细的异常信息
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
      * 获取给定数量的用户
      * @param nums
      * @return
@@ -298,7 +411,7 @@ public class GitHubUtils {
         try {
             for (int i = 0; i < page; i++) {
                 Random random = new Random();
-                // 获取起点
+                // 获取随机起点
                 int randomInt = random.nextInt(USER_MAX_NUM);
 
                 String url = "https://api.github.com/users?repos>0&since=" + randomInt + "&per_page=" + pageSize;
@@ -311,15 +424,6 @@ public class GitHubUtils {
             throw new RuntimeException("Failed to fetch users", e);
         } finally {
             executor.shutdown();
-            try {
-                // 超过60s强行停止
-                if (!executor.awaitTermination(60, TimeUnit.SECONDS)) {
-                    executor.shutdownNow();
-                }
-            } catch (InterruptedException ex) {
-                executor.shutdownNow();
-                Thread.currentThread().interrupt();
-            }
         }
 
         return userList;
@@ -444,6 +548,8 @@ public class GitHubUtils {
 
         if (repos == null) return null;
 
+        UserDto userInfo = getUserInfo(userName);
+
         // 取出start值最高的五个项目
         List<Repos> collect = repos.stream().sorted(Comparator.comparingInt(Repos::getStargazers_count).reversed())
                 .limit(5)
@@ -453,6 +559,13 @@ public class GitHubUtils {
         kimiDto.setModel("moonshot-v1-32k");
 
         List<KimiMessage> kimiMessageList = new ArrayList<>();
+
+        if (userInfo != null && StringUtils.isNotBlank(userInfo.getBio())) {
+            KimiMessage message = new KimiMessage();
+            message.setRole("user");
+            message.setContent("用户介绍：" + userInfo.getBio() + "，需要将此介绍也输出出来");
+            kimiMessageList.add(message);
+        }
 
         for (Repos repo : collect) {
             String repoName = repo.getName();
@@ -494,7 +607,7 @@ public class GitHubUtils {
 
         KimiMessage kimiMessage = new KimiMessage();
         kimiMessage.setRole("user");
-        kimiMessage.setContent("请根据以上内容，简要介绍作者的技术特点");
+        kimiMessage.setContent("请根据用户介绍（如果存在）和他的一些作品的readme文件，简要介绍作者的技术特点");
         kimiMessageList.add(kimiMessage);
 
         kimiDto.setMessages(kimiMessageList);
@@ -532,11 +645,18 @@ public class GitHubUtils {
         }
     }
 
-    public static void main(String[] args) {
-        GitHubUtils gitHubUtils = new GitHubUtils();
+//    public static void main(String[] args) {
+//        GitHubUtils gitHubUtils = new GitHubUtils();
+//
+//        String s = getUserLocations1("borkdude");
+//
+//        System.out.println(s);
+//
+//        s.split()
 
-        String locationCount = gitHubUtils.getUserLocations("ruanyl");
-        System.out.println(locationCount);
+//
+//        String locationCount = gitHubUtils.getUserLocations("ruanyl");
+//        System.out.println(locationCount);
 
 //        gitHubUtils.getUser(200);
 //        System.out.println(gitHubUtils.getScore("tpope"));
@@ -582,5 +702,5 @@ public class GitHubUtils {
 
 //        getKimiEvaluate("tpope");
 //
-    }
+//    }
 }

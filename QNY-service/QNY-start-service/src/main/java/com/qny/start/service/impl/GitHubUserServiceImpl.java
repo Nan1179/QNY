@@ -199,7 +199,7 @@ public class GitHubUserServiceImpl implements GitHubUserService {
     public Response guessLocation(String userName) {
         if (!StringUtils.isNotBlank(userName)) return Response.errorResult(AppHttpCodeEnum.PARAM_INVALID);
 
-        String userLocations = GitHubUtils.getUserLocations(userName);
+        String userLocations = GitHubUtils.getUserLocations1(userName);
 
         Map<String, String> map = new HashMap<>();
         map.put("userLocations", userLocations);
@@ -230,7 +230,10 @@ public class GitHubUserServiceImpl implements GitHubUserService {
                 executor.submit((Callable<Void>) () -> {
                     try {
                         Integer score = GitHubUtils.getScore(user.getLogin());
-                        if (score != 0) {
+                        // 防止请求过快
+                        Thread.sleep(500);
+                        // 如果需要修改
+                        if (score != 0 && !Objects.equals(user.getScore(), score)) {
                             user.setScore(score);
                             userMapper.updateById(user);
                         }
@@ -243,9 +246,6 @@ public class GitHubUserServiceImpl implements GitHubUserService {
             }
 
             executor.shutdown();
-            if (!executor.awaitTermination(300, TimeUnit.SECONDS)) {
-                executor.shutdownNow();
-            }
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException(e);
@@ -273,13 +273,13 @@ public class GitHubUserServiceImpl implements GitHubUserService {
             throw new RuntimeException(e);
         }
 
-        // 前10% 是 s 类
-        int sIndex = (int) Math.ceil(collect.size() * 0.1);
-        // 前30% 是 a 类
-        int aIndex = (int) Math.ceil(collect.size() * 0.3);
-        // 前50% 是 b 类
-        int bIndex = (int) Math.ceil(collect.size() * 0.5);
-        // 前70% 是 c 类
+        // 前1% 是 s 类
+        int sIndex = (int) Math.ceil(collect.size() * 0.01);
+        // 前10% 是 a 类
+        int aIndex = (int) Math.ceil(collect.size() * 0.1);
+        // 前20% 是 b 类
+        int bIndex = (int) Math.ceil(collect.size() * 0.3);
+        // 前50% 是 c 类
         int cIndex = (int) Math.ceil(collect.size() * 0.7);
 
         if (sIndex < collect.size()) {
@@ -313,10 +313,10 @@ public class GitHubUserServiceImpl implements GitHubUserService {
         lambdaQueryWrapper.gt(User::getScore, 0).orderByDesc(User::getScore);
         List<User> list = userMapper.selectList(lambdaQueryWrapper);
 
-        // 前10% 是s 类推下去
-        int sIndex = (int) Math.ceil(list.size() * 0.1);
-        int aIndex = (int) Math.ceil(list.size() * 0.3);
-        int bIndex = (int) Math.ceil(list.size() * 0.5);
+        // 前1% 是s 类推下去
+        int sIndex = (int) Math.ceil(list.size() * 0.01);
+        int aIndex = (int) Math.ceil(list.size() * 0.1);
+        int bIndex = (int) Math.ceil(list.size() * 0.3);
         int cIndex = (int) Math.ceil(list.size() * 0.7);
 
         if (sIndex < list.size()) {

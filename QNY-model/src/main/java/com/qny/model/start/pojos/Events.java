@@ -7,13 +7,7 @@ public class Events {
 
     private String id;
 
-    private Repo repo;
+    private String createdAt;
+    private String updatedAt;
 
-    @Data
-    public class Repo {
-
-        private long id;
-        private String name;
-        private String url;
-    }
 }

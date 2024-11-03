@@ -56,7 +56,7 @@ public class DataServiceImpl implements DataService {
     private StringRedisTemplate stringRedisTemplate;
 
     /**
-     * 加锁
+     * 加锁（redis）
      * @param name
      * @param expire
      * @return
@@ -85,7 +85,6 @@ public class DataServiceImpl implements DataService {
 
     @Override
     public Response loadUser(Integer num) throws InterruptedException {
-
         if (num == null) return Response.errorResult(AppHttpCodeEnum.PARAM_INVALID);
         ExecutorService executor = Executors.newFixedThreadPool(THREAD_NUM);
 
