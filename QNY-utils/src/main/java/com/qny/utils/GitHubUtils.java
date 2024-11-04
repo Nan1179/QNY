@@ -340,6 +340,8 @@ public class GitHubUtils {
             // 置信度太低
             if (locationCount1.size() < 5 && locationCount2.size() < 5) return "N/A";
 
+            UserDto userDto = getUserInfo(userName);
+
             KimiDto kimiDto = new KimiDto();
             kimiDto.setModel("moonshot-v1-32k");
 
@@ -353,18 +355,34 @@ public class GitHubUtils {
 
             KimiMessage kimiMessage2 = new KimiMessage();
             kimiMessage2.setRole("user");
-            kimiMessage2.setContent("用户关注的人的居住地数量" + locationCount1);
+            kimiMessage2.setContent("用户关注的人的居住地数量：" + locationCount2);
             list.add(kimiMessage2);
 
             KimiMessage kimiMessage3 = new KimiMessage();
             kimiMessage3.setRole("user");
-            kimiMessage3.setContent("用户粉丝的居住地数量" + locationCount2);
+            kimiMessage3.setContent("用户粉丝的居住地数量：" + locationCount1);
             list.add(kimiMessage3);
 
-            KimiMessage kimiMessage4 = new KimiMessage();
-            kimiMessage4.setRole("user");
-            kimiMessage4.setContent("请根据用户的工作时间（从中获得时区），以及根据用户的社交关系推断该github用户最有可能的国籍，只需要显示推断理由和结果，若置信度过低则返回N/A");
-            list.add(kimiMessage4);
+            if (userDto != null) {
+                if (StringUtils.isNotBlank(userDto.getName())) {
+                    KimiMessage kimiMessage4 = new KimiMessage();
+                    kimiMessage4.setRole("user");
+                    kimiMessage4.setContent("用户的github名字：" + userDto.getName());
+                    list.add(kimiMessage4);
+                }
+
+                if (StringUtils.isNotBlank(userDto.getCompany())) {
+                    KimiMessage kimiMessage5 = new KimiMessage();
+                    kimiMessage5.setRole("user");
+                    kimiMessage5.setContent("用户的公司名称：" + userDto.getCompany());
+                    list.add(kimiMessage5);
+                }
+            }
+
+            KimiMessage kimiMessage6 = new KimiMessage();
+            kimiMessage6.setRole("user");
+            kimiMessage6.setContent("请根据用户的工作时间（从中获得时区），用户的社交关系，用户的名字（如果存在），用户的公司（如果存在）推断该github用户最有可能的国籍，只需要显示推断理由和结果，若置信度过低则返回N/A");
+            list.add(kimiMessage6);
 
             kimiDto.setMessages(list);
 
@@ -556,7 +574,7 @@ public class GitHubUtils {
                 .collect(Collectors.toList());
 
         KimiDto kimiDto = new KimiDto();
-        kimiDto.setModel("moonshot-v1-32k");
+        kimiDto.setModel("moonshot-v1-8k");
 
         List<KimiMessage> kimiMessageList = new ArrayList<>();
 
@@ -645,12 +663,12 @@ public class GitHubUtils {
         }
     }
 
-//    public static void main(String[] args) {
+    public static void main(String[] args) {
 //        GitHubUtils gitHubUtils = new GitHubUtils();
 //
-//        String s = getUserLocations1("borkdude");
+        String s = getUserLocations1("zebslc");
 //
-//        System.out.println(s);
+        System.out.println(s);
 //
 //        s.split()
 
@@ -702,5 +720,5 @@ public class GitHubUtils {
 
 //        getKimiEvaluate("tpope");
 //
-//    }
+    }
 }

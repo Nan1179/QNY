@@ -277,9 +277,9 @@ public class GitHubUserServiceImpl implements GitHubUserService {
         int sIndex = (int) Math.ceil(collect.size() * 0.01);
         // 前10% 是 a 类
         int aIndex = (int) Math.ceil(collect.size() * 0.1);
-        // 前20% 是 b 类
+        // 前30% 是 b 类
         int bIndex = (int) Math.ceil(collect.size() * 0.3);
-        // 前50% 是 c 类
+        // 前70% 是 c 类
         int cIndex = (int) Math.ceil(collect.size() * 0.7);
 
         if (sIndex < collect.size()) {
