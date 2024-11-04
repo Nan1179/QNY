@@ -338,12 +338,12 @@ public class GitHubUtils {
             }
 
             // 置信度太低
-            if (locationCount1.size() < 5 && locationCount2.size() < 5) return "N/A";
+            if (locationCount1.size() < 5 && locationCount2.size() < 3) return "N/A";
 
             UserDto userDto = getUserInfo(userName);
 
             KimiDto kimiDto = new KimiDto();
-            kimiDto.setModel("moonshot-v1-32k");
+            kimiDto.setModel("moonshot-v1-auto");
 
             List<KimiMessage> list = new ArrayList<>();
 
@@ -574,7 +574,7 @@ public class GitHubUtils {
                 .collect(Collectors.toList());
 
         KimiDto kimiDto = new KimiDto();
-        kimiDto.setModel("moonshot-v1-8k");
+        kimiDto.setModel("moonshot-v1-auto");
 
         List<KimiMessage> kimiMessageList = new ArrayList<>();
 
@@ -663,12 +663,21 @@ public class GitHubUtils {
         }
     }
 
-    public static void main(String[] args) {
+//    public static void main(String[] args) {
+
+//        System.out.println(System.currentTimeMillis());
+//        String s = "1234----1111111111";
+//
+//        for (String string : s.split("----")) {
+//            System.out.println(string);
+//        }
+
+
 //        GitHubUtils gitHubUtils = new GitHubUtils();
 //
-        String s = getUserLocations1("zebslc");
+//        String s = getUserLocations1("zebslc");
 //
-        System.out.println(s);
+//        System.out.println(s);
 //
 //        s.split()
 
@@ -720,5 +729,5 @@ public class GitHubUtils {
 
 //        getKimiEvaluate("tpope");
 //
-    }
+//    }
 }

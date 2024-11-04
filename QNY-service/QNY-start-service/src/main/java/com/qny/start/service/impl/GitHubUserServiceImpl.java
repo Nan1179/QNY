@@ -215,6 +215,9 @@ public class GitHubUserServiceImpl implements GitHubUserService {
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
 
+    /**
+     * 更新技术评级得分
+     */
     @Override
     public void computeUserScore() {
         ExecutorService executor = Executors.newFixedThreadPool(THREAD_NUM);
@@ -231,7 +234,7 @@ public class GitHubUserServiceImpl implements GitHubUserService {
                     try {
                         Integer score = GitHubUtils.getScore(user.getLogin());
                         // 防止请求过快
-                        Thread.sleep(500);
+                        Thread.sleep(1000);
                         // 如果需要修改
                         if (score != 0 && !Objects.equals(user.getScore(), score)) {
                             user.setScore(score);

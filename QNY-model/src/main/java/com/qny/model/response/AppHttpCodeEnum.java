@@ -31,7 +31,8 @@ public enum AppHttpCodeEnum {
     USER_BANNED(1001, "用户账号已被封禁"),
     STORE_NOT_BOSS(500, "该用户不是商家"),
 
-    USER_ERROR(500, "用户传入了不需要的参数");
+    USER_ERROR(500, "用户传入了不需要的参数"),
+    GITHUB_USER_LIMIT(500, "一小时内只能插入300个用户");
 
 
     int code;

@@ -30,6 +30,8 @@ import org.springframework.data.redis.core.types.Expiration;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -86,6 +88,30 @@ public class DataServiceImpl implements DataService {
     @Override
     public Response loadUser(Integer num) throws InterruptedException {
         if (num == null) return Response.errorResult(AppHttpCodeEnum.PARAM_INVALID);
+
+        // 一小时只能插入300个用户
+        if (num > 300) return Response.errorResult(AppHttpCodeEnum.GITHUB_USER_LIMIT);
+
+        // 此数据为当前小时内已经插入的用户数量
+        String s = stringRedisTemplate.opsForValue().get("loadUserNums");
+
+        if (StringUtils.isNotBlank(s)) {
+            int size = Integer.parseInt(s);
+
+            // 原来的数量加上当前的数量小于300才允许插入
+            if (size + num <= 300) {
+                Long expire  = stringRedisTemplate.getExpire("loadUserNums");
+                if (expire != null && expire > 0) {
+                    // 修改数据，同时保持expire不变
+                    stringRedisTemplate.opsForValue().set("loadUserNums", String.valueOf(size + num), expire, TimeUnit.SECONDS);
+                }
+
+            } else return Response.errorResult(AppHttpCodeEnum.GITHUB_USER_LIMIT); // 大于300 返回错误信息
+        } else {
+            // 到了新的一个小时，向redis中插入此次load数量
+            stringRedisTemplate.opsForValue().set("loadUserNums", String.valueOf(num), 1, TimeUnit.HOURS);
+        }
+
         ExecutorService executor = Executors.newFixedThreadPool(THREAD_NUM);
 
         List<User> users = GitHubUtils.getUser(num);
