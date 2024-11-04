@@ -370,18 +370,11 @@ public class GitHubUtils {
                     kimiMessage4.setContent("用户的github名字：" + userDto.getName());
                     list.add(kimiMessage4);
                 }
-
-                if (StringUtils.isNotBlank(userDto.getCompany())) {
-                    KimiMessage kimiMessage5 = new KimiMessage();
-                    kimiMessage5.setRole("user");
-                    kimiMessage5.setContent("用户的公司名称：" + userDto.getCompany());
-                    list.add(kimiMessage5);
-                }
             }
 
             KimiMessage kimiMessage6 = new KimiMessage();
             kimiMessage6.setRole("user");
-            kimiMessage6.setContent("请根据用户的工作时间（从中获得时区），用户的社交关系，用户的名字（如果存在），用户的公司（如果存在）推断该github用户最有可能的国籍，只需要显示推断理由和结果，若置信度过低则返回N/A");
+            kimiMessage6.setContent("请根据用户的工作时间（从中获得时区），用户的社交关系，用户的名字（如果存在）推断该github用户最有可能的国籍，只需要显示推断理由和结果，若置信度过低则返回N/A");
             list.add(kimiMessage6);
 
             kimiDto.setMessages(list);

@@ -10,6 +10,7 @@
     <option name="ignoredFiles">
       <set>
         <option value="$PROJECT_DIR$/QNY-basic/pom.xml" />
+        <option value="$PROJECT_DIR$/QNY-feign-api/pom.xml" />
       </set>
     </option>
   </component>
