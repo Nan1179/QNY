@@ -36,6 +36,7 @@ import org.joda.time.DateTime;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -215,6 +216,9 @@ public class GitHubUserServiceImpl implements GitHubUserService {
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
 
+    @Autowired
+    private KafkaTemplate<String,String> kafkaTemplate;
+
     /**
      * 更新技术评级得分
      */
@@ -226,6 +230,8 @@ public class GitHubUserServiceImpl implements GitHubUserService {
         Date date = DateTime.now().minusYears(2).toDate();
         queryWrapper.gt(User::getUpdatedAt, date);
         List<User> userList = userMapper.selectList(queryWrapper);
+
+        if (userList == null) return;
 
         try {
             // 更新分值
@@ -262,19 +268,11 @@ public class GitHubUserServiceImpl implements GitHubUserService {
                 .collect(Collectors.toList());
 
         // 更新到es中
-        try {
-            for (User user : collect) {
-                UpdateRequest request = new UpdateRequest("user", user.getId().toString());
-                request.doc(
-                        "score", user.getScore()
-                );
+        for (User user : collect) {
+            kafkaTemplate.send("es.update.topic", JSON.toJSONString(user));
 
-                client.update(request, RequestOptions.DEFAULT);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
         }
+
 
         // 前1% 是 s 类
         int sIndex = (int) Math.ceil(collect.size() * 0.01);

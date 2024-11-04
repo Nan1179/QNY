@@ -27,6 +27,7 @@ import org.springframework.data.redis.connection.RedisStringCommands;
 import org.springframework.data.redis.core.RedisConnectionUtils;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.types.Expiration;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -52,10 +53,10 @@ public class DataServiceImpl implements DataService {
     private UserInfoMapper userInfoMapper;
 
     @Autowired
-    private RestHighLevelClient client;
+    private StringRedisTemplate stringRedisTemplate;
 
     @Autowired
-    private StringRedisTemplate stringRedisTemplate;
+    private KafkaTemplate<String,String> kafkaTemplate;
 
     /**
      * 加锁（redis）
@@ -177,11 +178,12 @@ public class DataServiceImpl implements DataService {
                         userES.setCreated_at(userInfo.getCreatedAt());
                         userES.setUpdated_at(userInfo.getUpdatedAt());
                         String jsonString = JSON.toJSONString(userES);
-                        IndexRequest request = new IndexRequest("user").id(userES.getId().toString());
-                        request.source(jsonString, XContentType.JSON);
+
+                        // 插入
+                        kafkaTemplate.send("es.sync.topic", jsonString);
                         userMapper.insert(user);
                         userInfoMapper.insert(userInfo);
-                        client.index(request, RequestOptions.DEFAULT);
+
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
