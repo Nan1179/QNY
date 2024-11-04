@@ -10,7 +10,6 @@
     <packaging>pom</packaging>
     <modules>
         <module>QNY-common</module>
-        <module>QNY-feign-api</module>
         <module>QNY-gateway</module>
         <module>QNY-model</module>
         <module>QNY-service</module>

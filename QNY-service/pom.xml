@@ -30,10 +30,6 @@
             <groupId>com.qny</groupId>
             <artifactId>QNY-common</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.qny</groupId>
-            <artifactId>QNY-feign-api</artifactId>
-        </dependency>
         <!-- Spring boot starter -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
