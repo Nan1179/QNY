@@ -225,13 +225,16 @@ public class GitHubUserServiceImpl implements GitHubUserService {
     @Override
     public void computeUserScore() {
         ExecutorService executor = Executors.newFixedThreadPool(THREAD_NUM);
-        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<User>();
-        // 只更新近两年还在活跃的用户
-        Date date = DateTime.now().minusYears(2).toDate();
-        queryWrapper.gt(User::getUpdatedAt, date);
+        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+        // 只更新活跃的前300个用户
+        queryWrapper.orderByDesc(User::getUpdatedAt);
         List<User> userList = userMapper.selectList(queryWrapper);
 
         if (userList == null) return;
+
+        // 只取前300个用户
+        userList = userList.subList(0, Math.min(300, userList.size()));
+        log.info("要更新的用户数量：{}", userList.size());
 
         try {
             // 更新分值
@@ -239,12 +242,12 @@ public class GitHubUserServiceImpl implements GitHubUserService {
                 executor.submit((Callable<Void>) () -> {
                     try {
                         Integer score = GitHubUtils.getScore(user.getLogin());
-                        // 防止请求过快
-                        Thread.sleep(1000);
                         // 如果需要修改
                         if (score != 0 && !Objects.equals(user.getScore(), score)) {
+                            log.info("{}正在被更新", user.getLogin());
                             user.setScore(score);
                             userMapper.updateById(user);
+                            kafkaTemplate.send("es.update.topic", JSON.toJSONString(user));
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -260,18 +263,14 @@ public class GitHubUserServiceImpl implements GitHubUserService {
             throw new RuntimeException(e);
         }
 
+        LambdaQueryWrapper<User> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.gt(User::getScore, 0).orderByDesc(User::getScore);
+        List<User> collect = userMapper.selectList(lambdaQueryWrapper);
 
-        // 取出score大于0的元素，并以降序排序
-        List<User> collect = userList.stream()
-                .filter(user -> user != null && user.getScore() > 0)
-                .sorted(Comparator.comparingInt(User::getScore).reversed())
-                .collect(Collectors.toList());
-
-        // 更新到es中
-        for (User user : collect) {
-            kafkaTemplate.send("es.update.topic", JSON.toJSONString(user));
-
-        }
+//        // 取出score大于0的元素，并以降序排序
+//        List<User> collect = userList1.stream()
+//                .sorted(Comparator.comparingInt(User::getScore).reversed())
+//                .collect(Collectors.toList());
 
 
         // 前1% 是 s 类
@@ -349,11 +348,12 @@ public class GitHubUserServiceImpl implements GitHubUserService {
 
     @Override
     public Response getGrade() {
-        // 存到redis中
         String sScore = stringRedisTemplate.opsForValue().get("sScore");
         String aScore = stringRedisTemplate.opsForValue().get("aScore");
         String bScore = stringRedisTemplate.opsForValue().get("bScore");
         String cScore = stringRedisTemplate.opsForValue().get("cScore");
+
+        if (!StringUtils.isNotBlank(sScore)) updateGrade();
 
         Map<String, String> map = new HashMap<>();
         map.put("sScore", sScore);
@@ -380,6 +380,62 @@ public class GitHubUserServiceImpl implements GitHubUserService {
         }
 
         return Response.okResult(evaluate);
+    }
+
+    @Override
+    public Response getGradeCount() {
+
+        String sSize = stringRedisTemplate.opsForValue().get("sSize");
+        String aSize = stringRedisTemplate.opsForValue().get("aSize");
+        String bSize = stringRedisTemplate.opsForValue().get("bSize");
+        String cSize = stringRedisTemplate.opsForValue().get("cSize");
+        String dSize = stringRedisTemplate.opsForValue().get("dSize");
+
+        if (!StringUtils.isNotBlank(sSize)) {
+            LambdaQueryWrapper<User> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+            lambdaQueryWrapper.gt(User::getScore, 0).orderByDesc(User::getScore);
+            List<User> list = userMapper.selectList(lambdaQueryWrapper);
+
+            // 前1% 是s 类推下去
+            int sIndex = (int) Math.ceil(list.size() * 0.01);
+            int aIndex = (int) Math.ceil(list.size() * 0.1);
+            int bIndex = (int) Math.ceil(list.size() * 0.3);
+            int cIndex = (int) Math.ceil(list.size() * 0.7);
+            int dIndex = list.size() - cIndex;
+
+            if (sIndex < list.size()) {
+                stringRedisTemplate.opsForValue().set("sSize", String.valueOf(sIndex));
+            }
+
+            if (aIndex < list.size()) {
+                stringRedisTemplate.opsForValue().set("aSize", String.valueOf(aIndex - sIndex));
+            }
+
+            if (bIndex < list.size()) {
+                stringRedisTemplate.opsForValue().set("bSize", String.valueOf(bIndex - aIndex));
+            }
+
+            if (cIndex < list.size()) {
+                stringRedisTemplate.opsForValue().set("cSize", String.valueOf(cIndex - bIndex));
+                stringRedisTemplate.opsForValue().set("dSize", String.valueOf(dIndex));
+
+            }
+
+            sSize = String.valueOf(sIndex);
+            aSize = String.valueOf(aIndex - sIndex);
+            bSize = String.valueOf(bIndex - aIndex);
+            cSize = String.valueOf(cIndex - bIndex);
+            dSize = String.valueOf(dIndex);
+        }
+
+        Map<String, String> map = new HashMap<>();
+        map.put("sSize", sSize);
+        map.put("aSize", aSize);
+        map.put("bSize", bSize);
+        map.put("cSize", cSize);
+        map.put("dSize", dSize);
+
+        return Response.okResult(map);
     }
 
     private Response handleResponse(SearchResponse response, UserPageDto dto) {

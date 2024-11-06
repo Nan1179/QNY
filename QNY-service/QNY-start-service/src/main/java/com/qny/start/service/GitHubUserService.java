@@ -49,4 +49,10 @@ public interface GitHubUserService {
      * @return
      */
     Response getEvaluate(String login);
+
+    /**
+     * 获取各等级人数
+     * @return
+     */
+    Response getGradeCount();
 }

@@ -32,7 +32,7 @@ public class GitHubUtils {
     // followers的权重
     private static int FOLLOWERS_W = 2;
     // 访问github，加速token
-    private static String AUTH_GITHUB = "token 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";
+    private static String AUTH_GITHUB = "token ";
     // kimi的token 需要自行获取
     private static String AUTH_KIMI = "sk-plfiZ3SNfypZuLsLMux8xTj81qcZKXj3AIaGKSETLDe7XjqK";
     // kimi接口地址
@@ -473,11 +473,13 @@ public class GitHubUtils {
 
         try {
             // 计算用的仓库得分
-            for (Repos repo : repos) {
-                Callable<Integer> task = () -> getRepoScore(repo, userName);
+            if (repos != null) {
+                for (Repos repo : repos) {
+                    Callable<Integer> task = () -> getRepoScore(repo, userName);
 
-                Future<Integer> future = executor.submit(task);
-                score += future.get();
+                    Future<Integer> future = executor.submit(task);
+                    score += future.get();
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();

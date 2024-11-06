@@ -78,4 +78,13 @@ public class GitHubUserController {
         return gitHubUserService.getEvaluate((String) map.get("login"));
 
     }
+
+    /**
+     * 获取各个等级的人数（用于前端展示）
+     * @return
+     */
+    @RequestMapping("/getGradeCount")
+    public Response getGradeCount() {
+        return gitHubUserService.getGradeCount();
+    }
 }
