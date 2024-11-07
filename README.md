@@ -262,16 +262,16 @@ mybatis-plus:
 
 ```
 QNY
-├── QNY-common                  		// 此项目中未用来编写代码，只起到加载依赖作用
+├── QNY-common                  				// 此项目中未用来编写代码，只起到加载依赖作用
 ├── QNY-gateway   						// 网关
 │   ├── QNY-app-gateway          
-│   │   ├── filter   				 	// 拦截请求
-│   │   ├── utils   					// JWT工具包
-│   │   ├── QNYGatewayApplication.java 	// 入口 
+│   │   ├── filter   				 		// 拦截请求
+│   │   ├── utils   						// JWT工具包
+│   │   ├── QNYGatewayApplication.java 				// 入口 
 ├── QNY-model							// 存储实体类
 │   ├── response						// 返回通用实体类
-│   │   ├── AppHttpCodeEnum.java 		// 状态码和错误信息
-│   │   ├── Response.java				// 实体类 
+│   │   ├── AppHttpCodeEnum.java 				// 状态码和错误信息
+│   │   ├── Response.java					// 实体类 
 │   ├── start							// start服务所用实体类
 │   │   ├── common						// 通用实体类 
 │   │   ├── dto							// 传输 
@@ -280,19 +280,19 @@ QNY
 │   │   ├── dtos						// 传输 
 │   │   ├── pojos 						// 数据库实体类
 ├── QNY-service							// 存储所有的服务层代码
-│   ├── QNY-start-service				// 主要服务
+│   ├── QNY-start-service					// 主要服务
 │   │   ├── config						// 配置
 │   │   ├── controller			
 │   │   ├── job							// xxl-job执行代码
-│   │   ├── listener					// kafka
+│   │   ├── listener						// kafka
 │   │   ├── mapper
 │   │   ├── service						
-│   │   ├── StartApplication			// 入口
-│   ├── QNY-user-service				// GitGuru用户服务
+│   │   ├── StartApplication					// 入口
+│   ├── QNY-user-service					// GitGuru用户服务
 ├── QNY-test							// 测试
 ├── QNY-utils							// 存储工具类
 │   ├── GitHubUtils						// 包括向GitHub API和Kimi接口发送请求（重要）
-│   ├── AppJwtUtil.java					// JWT工具包
+│   ├── AppJwtUtil.java						// JWT工具包
 
 ```
 
