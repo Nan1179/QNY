@@ -34,7 +34,7 @@ public class GitHubUtils {
     // 访问github，加速token
     private static String AUTH_GITHUB = "token ";
     // kimi的token 需要自行获取
-    private static String AUTH_KIMI = "sk-plfiZ3SNfypZuLsLMux8xTj81qcZKXj3AIaGKSETLDe7XjqK";
+    private static String AUTH_KIMI = "";
     // kimi接口地址
     private static final String CHAT_COMPLETION_URL = "https://api.moonshot.cn/v1/chat/completions";
     // 线程数
@@ -563,9 +563,9 @@ public class GitHubUtils {
 
         UserDto userInfo = getUserInfo(userName);
 
-        // 取出start值最高的五个项目
+        // 取出start值最高的三个项目
         List<Repos> collect = repos.stream().sorted(Comparator.comparingInt(Repos::getStargazers_count).reversed())
-                .limit(5)
+                .limit(3)
                 .collect(Collectors.toList());
 
         KimiDto kimiDto = new KimiDto();
