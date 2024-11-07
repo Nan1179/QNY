@@ -3,6 +3,7 @@ package com.qny.start.service.impl;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.qny.model.start.dto.ChatCompletionResponse;
+import com.qny.model.start.dto.UserInfoDto;
 import com.qny.utils.GitHubUtils;
 import com.qny.model.response.AppHttpCodeEnum;
 import com.qny.model.response.Response;
@@ -90,7 +91,7 @@ public class GitHubUserServiceImpl implements GitHubUserService {
             // 高亮
             HighlightBuilder highlightBuilder = new HighlightBuilder().field("name").field("topic").field("location").field("company")
                     .requireFieldMatch(false);
-            highlightBuilder.preTags("<font size=\"3\" color=\"red\">");
+            highlightBuilder.preTags("<font size=\"4\" color=\"red\">");
             highlightBuilder.postTags("</font>");
             request.source().highlighter(highlightBuilder);
             // 分页&排序
@@ -436,6 +437,30 @@ public class GitHubUserServiceImpl implements GitHubUserService {
         map.put("dSize", dSize);
 
         return Response.okResult(map);
+    }
+
+    @Override
+    public Response getUserInfo(String login) {
+
+        if (!StringUtils.isNotBlank(login)) return Response.errorResult(AppHttpCodeEnum.PARAM_INVALID);
+
+        LambdaQueryWrapper<User> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.eq(User::getLogin, login);
+        User user = userMapper.selectOne(lambdaQueryWrapper);
+
+        if (user == null) return Response.errorResult(AppHttpCodeEnum.DATA_NOT_EXIST);
+
+        LambdaQueryWrapper<UserInfo> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(UserInfo::getLogin, login);
+        UserInfo userInfo = userInfoMapper.selectOne(queryWrapper);
+
+        if (userInfo == null) return Response.errorResult(AppHttpCodeEnum.DATA_NOT_EXIST);
+
+        UserInfoDto userDto = new UserInfoDto();
+        BeanUtils.copyProperties(user, userDto);
+        BeanUtils.copyProperties(userInfo, userDto);
+
+        return Response.okResult(userDto);
     }
 
     private Response handleResponse(SearchResponse response, UserPageDto dto) {

@@ -13,14 +13,14 @@ public interface GitHubUserService {
     Response search(UserPageDto dto);
 
     /**
-     * 添加指定login的用户
+     * 添加指定login的GitHub用户
      * @param userName
      * @return
      */
     Response addUser(String userName);
 
     /**
-     * 猜测用户nation
+     * 猜测GitHub用户nation
      * @param userName
      * @return
      */
@@ -44,7 +44,7 @@ public interface GitHubUserService {
     Response getGrade();
 
     /**
-     * 获得用户评估
+     * 获得GitHub用户评估
      * @param login
      * @return
      */
@@ -55,4 +55,11 @@ public interface GitHubUserService {
      * @return
      */
     Response getGradeCount();
+
+    /**
+     * 获取GitHub用户详细信息
+     * @param login
+     * @return
+     */
+    Response getUserInfo(String login);
 }

@@ -428,7 +428,8 @@ public class GitHubUtils {
                 String url = "https://api.github.com/users?repos>0&since=" + randomInt + "&per_page=" + pageSize;
                 Callable<List<User>> task = () -> JSON.parseArray(request(url), User.class);
                 Future<List<User>> future = executor.submit(task);
-                userList.addAll(future.get());
+                List<User> list = future.get();
+                if (list != null) userList.addAll(future.get());
             }
         } catch (Exception e) {
             e.printStackTrace(); // 更详细的异常信息
