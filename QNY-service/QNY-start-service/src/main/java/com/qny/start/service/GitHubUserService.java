@@ -62,4 +62,13 @@ public interface GitHubUserService {
      * @return
      */
     Response getUserInfo(String login);
+
+    /**
+     * 获取用户仓库
+     * @param login
+     * @return
+     */
+    Response getRepo(String login);
+
+//    Response getRank(String login);
 }

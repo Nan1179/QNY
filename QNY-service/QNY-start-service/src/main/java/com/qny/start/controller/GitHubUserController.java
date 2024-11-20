@@ -93,4 +93,14 @@ public class GitHubUserController {
     public Response getUserInfo(@RequestBody Map map) {
         return gitHubUserService.getUserInfo((String) map.get("login"));
     }
+
+    @PostMapping("/getRepo")
+    public Response getRepo(@RequestBody Map map) {
+        return gitHubUserService.getRepo((String) map.get("login"));
+    }
+
+//    @PostMapping("/getRank")
+//    public Response getRank(@RequestBody Map map) {
+//        return gitHubUserService.getRank((String) map.get("login"));
+//    }
 }

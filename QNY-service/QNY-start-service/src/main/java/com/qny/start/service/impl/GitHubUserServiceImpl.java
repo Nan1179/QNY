@@ -463,6 +463,25 @@ public class GitHubUserServiceImpl implements GitHubUserService {
         return Response.okResult(userDto);
     }
 
+    @Override
+    public Response getRepo(String login) {
+
+        if (!StringUtils.isNotBlank(login)) return Response.errorResult(AppHttpCodeEnum.PARAM_INVALID);
+
+        List<Repos> repo = GitHubUtils.getRepo(login);
+
+        return Response.okResult(repo);
+    }
+
+//    @Override
+//    public Response getRank(String login) {
+//
+//        if (!StringUtils.isNotBlank(login)) return Response.errorResult(AppHttpCodeEnum.PARAM_INVALID);
+//
+//
+//        return null;
+//    }
+
     private Response handleResponse(SearchResponse response, UserPageDto dto) {
         SearchHits searchHits = response.getHits();
         long total = searchHits.getTotalHits().value;

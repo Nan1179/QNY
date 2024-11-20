@@ -457,6 +457,7 @@ user.setPassword(password);
 
 ![](img/f602e2e4-d13d-4db6-a8c3-cb8c71849508.png)
 
+GitGuru有两种加载数据的方式，一种是手动添加，一种是利用Xxl-Job定时添加。
 GitGuru是从GitHub API中得到数据的。但GitHub API存在一个限制，也就是一般用户只能**每小时请求5000次**。为了防止用户加载过多的用户，使得超过5000次这个阈值，GitGuru采用Redis进行限制，规定用户每小时只能存入不大于300个GitHub用户（由于加载GitHub用户的同时，还会去计算其技术得分和领域，所以每加载一个GitHub用户大致需要请求GitHub API10次，所以规定300这个限制）。其具体实现细节是，每次加载GitHub用户，会去扫描Redis中是否存在key  **`loadUserNums`** ，若存在，则会去判断其值加上此次的值是否超过300，若超过则不能加载，若没超过则更新value，同时保持过期时间不变。若没有这个key，则会去存入这个key对应当前加载数量的value，设置过期时间为1h。***（如下图）***
 
 ![](img/0f584b71-a83c-4168-becb-e8bea910811c.png)
