@@ -37,7 +37,7 @@ GitGuru是一个GitHub数据应用，其主要功能为开发者评估，此项�
 
 # 二. 功能演示
 
-- 前端：https://www.bilibili.com/video/BV1wdDSYjEVB/?vd_source=87f3da7c5a6a611dc4cd4f324df29ee8
+- 前端：https://www.bilibili.com/video/BV1WmBvYGEtV/?vd_source=87f3da7c5a6a611dc4cd4f324df29ee8
 
 
 - 利用Xxl-Job定时任务更新用户分值演示视频：https://www.bilibili.com/video/BV1HoDSY1EBR/?vd_source=028657a849e866c70dc5d4bc19b98741
